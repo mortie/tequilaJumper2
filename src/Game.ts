@@ -44,6 +44,7 @@ class Player {
 	box: Box;
 	velocity = {x: 0, y: 0};
 	onGround = false;
+	lost = false;
 
 	jumpThrusting = false;
 	jumpThrustTimer = 0;
@@ -126,7 +127,8 @@ export default class Game {
 	players: Player[] = [];
 	platforms: Platform[] = [];
 	paused = false;
-	cameraY = 0;
+	camera = {x: 0, y: 0};
+	winner: Player|null = null;
 
 	constructor() {
 		this.platforms.push({box: new Box(-100, 2, 200, 1)});
@@ -142,14 +144,55 @@ export default class Game {
 			dt = 0.1;
 		}
 
+		let ctx = can.ctx;
+		ctx.translate(can.width / 2, can.height / 1.5);
+		ctx.scale(30, 30);
+
+		let liveCount = 0;
+		let camCenter = {x: 0, y: 0};
 		for (let player of this.players) {
-			player.update(dt);
+			if (player.lost) continue;
+			camCenter.x += player.box.x + player.box.width / 2;
+			camCenter.y += player.box.y + player.box.height / 2;
+			liveCount += 1;
 		}
 
-		let ctx = can.ctx;
-		ctx.translate(can.width / 2, can.height / 2);
-		ctx.scale(30, 30);
-		ctx.translate(0, 8);
+		if (liveCount > 0) {
+			camCenter.x /= liveCount;
+			camCenter.y /= liveCount;
+
+			let camDeltaX = camCenter.x - this.camera.x;
+			this.camera.x += camDeltaX * 10 * dt;
+			let camDeltaY = camCenter.y - this.camera.y;
+			this.camera.y += camDeltaY * 10 * dt;
+
+		}
+
+		ctx.translate(-this.camera.x, -this.camera.y);
+
+		let actualLivePlayer = null;
+		let maybeLivePlayer = null;
+		liveCount = 0;
+		for (let player of this.players) {
+			if (player.lost) continue;
+			maybeLivePlayer = player;
+			player.update(dt);
+			if (player.box.y > camCenter.y + 15) {
+				player.lost = true;
+			} else {
+				actualLivePlayer = player;
+				liveCount += 1;
+			}
+		}
+
+		if (liveCount <= 1 && this.players.length > 1) {
+			if (liveCount == 0) {
+				this.winner = maybeLivePlayer;
+			} else {
+				this.winner = actualLivePlayer;
+			}
+			return;
+		}
 
 		ctx.strokeStyle = "black";
 		ctx.lineWidth = 0.1;

@@ -44,6 +44,7 @@ function randomColor(players: JoinedPlayer[]) {
 
 export default class Lobby {
 	game: Game|null = null;
+	winner: string|null = null;
 	gamePausedDueToDisconnect = false;
 
 	keyboardControllers: KeyboardController[] = [
@@ -190,6 +191,33 @@ export default class Lobby {
 		} else {
 			this.game.update(can, dt);
 		}
+
+		if (this.game.winner) {
+			this.winner = this.game.winner.color;
+			this.game = null;
+			this.joinedPlayers = [];
+			setTimeout(() => this.winner = null, 4000);
+		}
+	}
+
+	drawWinner(can: Canvas) {
+		if (!this.winner) {
+			return;
+		}
+
+		let ctx = can.ctx;
+		ctx.font = "40px Sans-Serif";
+		let text = "Winner!"
+		let metrics = ctx.measureText(text);
+		let x = can.width / 2 - metrics.width / 2;
+		let y = can.height / 2 - 10;
+		ctx.fillStyle = this.winner;
+		ctx.strokeStyle = "black";
+		ctx.fillRect(x - 10, y - 30, metrics.width + 20, 60);
+		ctx.strokeRect(x - 10, y - 30, metrics.width + 20, 60);
+		ctx.textBaseline = "middle";
+		ctx.fillStyle = "black";
+		ctx.fillText(text, x, y);
 	}
 
 	update(can: Canvas, dt: number) {
@@ -198,6 +226,10 @@ export default class Lobby {
 		if (this.game) {
 			can.ctx.save();
 			this.updateGame(can, dt);
+			can.ctx.restore();
+		} else if (this.winner) {
+			can.ctx.save();
+			this.drawWinner(can);
 			can.ctx.restore();
 		} else {
 			can.ctx.save();
