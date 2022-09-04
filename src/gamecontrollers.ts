@@ -22,13 +22,6 @@ interface KeyMap {
 	cancel: string;
 }
 
-export let standardKeyMap: KeyMap = {
-	left: "KeyA",
-	right: "KeyD",
-	jump: "Space",
-	cancel: "Escape",
-};
-
 export class KeyboardController implements GameController {
 	id: string;
 	private keyMap: KeyMap;

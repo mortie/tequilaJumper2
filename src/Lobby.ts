@@ -1,7 +1,6 @@
 import {
 	KeyboardController,
 	GameController,
-	standardKeyMap,
 	gamepadControllers,
 } from './gamecontrollers';
 
@@ -49,7 +48,12 @@ export default class Lobby {
 	gamePausedDueToDisconnect = false;
 
 	keyboardControllers: KeyboardController[] = [
-		new KeyboardController("Keyboard 1", standardKeyMap),
+		new KeyboardController("Keyboard 1", {
+			left: "KeyA",
+			right: "KeyD",
+			jump: "KeyW",
+			cancel: "KeyS",
+		}),
 		new KeyboardController("Keyboard 2", {
 			left: "ArrowLeft",
 			right: "ArrowRight",
@@ -115,7 +119,7 @@ export default class Lobby {
 
 			ctx.fillStyle = "black";
 			ctx.font = "20pt Sans-Serif";
-			ctx.fillText(player.controller.id, 20, y);
+			ctx.fillText(player.controller.id, 20, y + 4);
 
 			ctx.font = "12pt Sans-Serif";
 			let text = player.ready ? "Ready" : "Not ready";
@@ -152,7 +156,7 @@ export default class Lobby {
 
 				ctx.fillStyle = "black";
 				ctx.font = "20pt Sans-Serif";
-				ctx.fillText(player.controller.id, 20, y);
+				ctx.fillText(player.controller.id, 20, y + 4);
 
 				ctx.font = "12pt Sans-Serif";
 				ctx.fillText("Disconnected", 30, y + 35);

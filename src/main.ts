@@ -25,7 +25,7 @@ size();
 
 let lobby = new Lobby();
 
-let fpsClasses = [30, 60, 75, 90, 120, 144];
+let fpsClasses = [30, 60, 75, 80, 90, 120, 144];
 let dtClasses = fpsClasses.map(fps => {
 	let dt = 1 / fps;
 	let variance = dt * 0.02;

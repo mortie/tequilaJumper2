@@ -101,6 +101,16 @@ class Player {
 			}
 		}
 
+		// Speed boost if you hold jump and touch a platform
+		if (reading.jumpHeld) {
+			for (let platform of this.game.platforms) {
+				if (this.box.intersects(platform.box)) {
+					this.velocity.y -= 100 * dt;
+					break;
+				}
+			}
+		}
+
 		if (this.jumpThrusting && (!reading.jumpHeld || this.onGround)) {
 			this.jumpThrusting = false;
 		}
@@ -123,6 +133,22 @@ class Player {
 	}
 }
 
+class WorldGen {
+	x = 0;
+	y = 0;
+
+	tick(game: Game, maxY: number) {
+		while (this.y > maxY) {
+			let x = this.x + (Math.random() * 8 - 4);
+			let y = this.y - (Math.random() * 3 + 1);
+			let width = Math.random() * 5 + 5;
+			game.platforms.push({box: new Box(x - width / 2, y, width, 0.5)});
+			this.x = x;
+			this.y = y;
+		}
+	}
+}
+
 export default class Game {
 	players: Player[] = [];
 	platforms: Platform[] = [];
@@ -130,13 +156,10 @@ export default class Game {
 	camera = {x: 0, y: 0};
 	gameOver = false;
 	winner: Player|null = null;
+	worldgen = new WorldGen();
 
 	constructor() {
 		this.platforms.push({box: new Box(-100, 2, 200, 1)});
-		this.platforms.push({box: new Box(2, -1, 4, 0.5)});
-		this.platforms.push({box: new Box(-5, -6, 4, 0.7)});
-		this.platforms.push({box: new Box(-10, -9, 4, 0.7)});
-		this.platforms.push({box: new Box(0, -13, 9, 1)});
 	}
 
 	update(can: Canvas, dt: number) {
@@ -169,6 +192,8 @@ export default class Game {
 
 		}
 
+		this.worldgen.tick(this, this.camera.y - 20);
+
 		ctx.translate(-this.camera.x, -this.camera.y);
 
 		let actualLivePlayer = null;
@@ -178,7 +203,7 @@ export default class Game {
 			if (player.lost) continue;
 			maybeLivePlayer = player;
 			player.update(dt);
-			if (player.box.y > camCenter.y + 15) {
+			if (player.box.y > this.camera.y + 15) {
 				player.lost = true;
 			} else {
 				actualLivePlayer = player;
