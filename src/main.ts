@@ -58,7 +58,9 @@ function update(now: DOMHighResTimeStamp) {
 	canvas.width = canvas.width;
 	ctx.scale(dpr, dpr);
 
+	ctx.save();
 	lobby.update(can, fixedDt);
+	ctx.restore();
 }
 
 requestAnimationFrame(update);

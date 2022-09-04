@@ -45,6 +45,7 @@ function randomColor(players: JoinedPlayer[]) {
 export default class Lobby {
 	game: Game|null = null;
 	winner: string|null = null;
+	gameOver = false;
 	gamePausedDueToDisconnect = false;
 
 	keyboardControllers: KeyboardController[] = [
@@ -78,7 +79,9 @@ export default class Lobby {
 		}
 	}
 
-	updateLobby(ctx: CanvasRenderingContext2D) {
+	updateLobby(can: Canvas) {
+		let ctx = can.ctx;
+
 		for (let controller of this.keyboardControllers) {
 			this.updateLobbyController(controller);
 		}
@@ -107,8 +110,8 @@ export default class Lobby {
 			}
 
 			ctx.fillStyle = player.color;
-			ctx.fillRect(15, y, 800, 55);
-			ctx.strokeRect(15, y, 800, 55);
+			ctx.fillRect(15, y, can.width - 30, 60);
+			ctx.strokeRect(15, y, can.width - 30, 60);
 
 			ctx.fillStyle = "black";
 			ctx.font = "20pt Sans-Serif";
@@ -116,9 +119,9 @@ export default class Lobby {
 
 			ctx.font = "12pt Sans-Serif";
 			let text = player.ready ? "Ready" : "Not ready";
-			ctx.fillText(text, 30, y + 35);
+			ctx.fillText(text, 25, y + 35);
 
-			y += 65;
+			y += 70;
 		}
 
 		if (startGame) {
@@ -197,6 +200,11 @@ export default class Lobby {
 			this.game = null;
 			this.joinedPlayers = [];
 			setTimeout(() => this.winner = null, 4000);
+		} else if (this.game.gameOver) {
+			this.gameOver = true;
+			this.game = null;
+			this.joinedPlayers = [];
+			setTimeout(() => this.gameOver = false, 4000);
 		}
 	}
 
@@ -220,21 +228,33 @@ export default class Lobby {
 		ctx.fillText(text, x, y);
 	}
 
+	drawGameOver(can: Canvas) {
+		if (!this.gameOver) {
+			return;
+		}
+
+		let ctx = can.ctx;
+		ctx.font = "40px Sans-Serif";
+		let text = "Game Over!"
+		let metrics = ctx.measureText(text);
+		let x = can.width / 2 - metrics.width / 2;
+		let y = can.height / 2 - 10;
+		ctx.textBaseline = "middle";
+		ctx.fillStyle = "black";
+		ctx.fillText(text, x, y);
+	}
+
 	update(can: Canvas, dt: number) {
 		can.ctx.textBaseline = "top";
 		can.ctx.fillText((1 / dt).toFixed(1) + " FPS", can.width - 50, 5);
 		if (this.game) {
-			can.ctx.save();
 			this.updateGame(can, dt);
-			can.ctx.restore();
 		} else if (this.winner) {
-			can.ctx.save();
 			this.drawWinner(can);
-			can.ctx.restore();
+		} else if (this.gameOver) {
+			this.drawGameOver(can);
 		} else {
-			can.ctx.save();
-			this.updateLobby(can.ctx);
-			can.ctx.restore();
+			this.updateLobby(can);
 		}
 	}
 }

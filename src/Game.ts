@@ -128,6 +128,7 @@ export default class Game {
 	platforms: Platform[] = [];
 	paused = false;
 	camera = {x: 0, y: 0};
+	gameOver = false;
 	winner: Player|null = null;
 
 	constructor() {
@@ -192,6 +193,8 @@ export default class Game {
 				this.winner = actualLivePlayer;
 			}
 			return;
+		} else if (liveCount == 0) {
+			this.gameOver = true;
 		}
 
 		ctx.strokeStyle = "black";
