@@ -1,11 +1,28 @@
 import Game, {Box} from './Game';
 import {GameController} from './gamecontrollers';
 
-function clamp(x: number, max: number, min: number) {
+function clamp(x: number, min: number, max: number) {
 	if (x > max) return max;
 	if (x < min) return min;
 	return x;
 }
+
+// From https://www.shadertoy.com/view/Ws3Xzr
+function smoothClamp(x: number, a: number, b: number) {
+	let t = clamp(x, a, b);
+	if (t == x) {
+		return b + (a - b) / (1 + Math.exp((b - a) * (2 * x - a - b) / ((x - a) * (b - x))));
+	} else {
+		return t;
+	}
+}
+
+// Also from https://www.shadertoy.com/view/Ws3Xzr
+function softClamp(x: number, a: number, b: number) {
+	let mid = (a + b) * 0.5;
+	return mid + smoothClamp((x - mid) * 0.5, a - mid, b - mid);
+}
+
 
 export default class Player {
 	game: Game;
@@ -55,7 +72,7 @@ export default class Player {
 		// Stepwise move in X axis
 		let moveX = this.velocity.x * dt;
 		while (moveX != 0) {
-			let delta = clamp(moveX, 0.5, -0.5);
+			let delta = clamp(moveX, -0.5, 0.5);
 			moveX -= delta;
 			this.box.x += delta;
 
@@ -76,7 +93,7 @@ export default class Player {
 		let moveY = this.velocity.y * dt;
 		this.onGround = false;
 		while (moveY != 0) {
-			let delta = clamp(moveY, 0.2, -0.2);
+			let delta = clamp(moveY, -0.2, 0.2);
 			moveY -= delta;
 			this.box.y += delta;
 
@@ -139,7 +156,7 @@ export default class Player {
 		let box = this.box;
 		let shift = -this.velocity.x * 0.03 + this.wobble.x;
 		let stretch = this.velocity.y * 0.01 - this.wobble.y;
-		let scaleY = Math.exp(stretch);
+		let scaleY = softClamp(Math.exp(stretch), 0.25, 5);
 		let scaleX = 1 / scaleY;
 
 		let w = box.width * scaleX;
