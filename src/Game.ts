@@ -21,14 +21,14 @@ export class Box {
 
 	intersects(other: Box) {
 		return (
-			this.x + this.width >= other.x && this.x <= other.x + other.width &&
-			this.y + this.height >= other.y && this.y <= other.y + other.height);
+			this.x + this.width > other.x && this.x < other.x + other.width &&
+			this.y + this.height > other.y && this.y < other.y + other.height);
 	}
 
 	bottomIntersects(other: Box) {
 		return (
-			this.x + this.width >= other.x && this.x <= other.x + other.width &&
-			this.y + this.height >= other.y && this.y +this.height <= other.y + other.height);
+			this.x + this.width > other.x && this.x < other.x + other.width &&
+			this.y + this.height > other.y && this.y + this.height < other.y + other.height);
 	}
 }
 
@@ -68,9 +68,9 @@ export default class Game {
 	}
 
 	update(can: Canvas, dt: number) {
-		if (dt > 0.1) {
+		if (dt > 0.05) {
 			console.warn("Delta time too big (" + dt + "s), campping to 100ms");
-			dt = 0.1;
+			dt = 0.05;
 		}
 
 		let ctx = can.ctx;

@@ -13,6 +13,8 @@ export default class Player {
 	color: string;
 	box: Box;
 	velocity = {x: 0, y: 0};
+	wobble = {x: 0, y: 0};
+	wobbleVelocity = {x: 0, y: 0};
 	onGround = false;
 	lost = false;
 
@@ -39,7 +41,16 @@ export default class Player {
 			this.velocity.y += (this.velocity.y + 0.1) * dt;
 		}
 
+		let initialVX = this.velocity.x;
+		let initialVY = this.velocity.y;
+
 		this.velocity.x -= this.velocity.x * dragForce * dt;
+
+		//v -= (k * (x - x_0) + cv) * dt
+		this.wobbleVelocity.x -= (80 * this.wobble.x + 1.6 * this.wobbleVelocity.x) * 5 * dt;
+		this.wobbleVelocity.y -= (80 * this.wobble.y + 1.6 * this.wobbleVelocity.y) * 5 * dt;
+		this.wobble.x += this.wobbleVelocity.x * dt;
+		this.wobble.y += this.wobbleVelocity.y * dt;
 
 		// Stepwise move in X axis
 		let moveX = this.velocity.x * dt;
@@ -47,6 +58,18 @@ export default class Player {
 			let delta = clamp(moveX, 0.5, -0.5);
 			moveX -= delta;
 			this.box.x += delta;
+
+			for (let entity of this.game.entities) {
+				if (!entity.props.wall) continue;
+				if (!this.box.intersects(entity.box)) continue;
+				if (this.velocity.x > 0) {
+					this.box.x = entity.box.x - this.box.width;
+				} else {
+					this.box.x = entity.box.x + entity.box.width;
+				}
+				this.velocity.x = 0;
+				moveX = 0;
+			}
 		}
 
 		// Stepwise move in Y axis
@@ -57,17 +80,22 @@ export default class Player {
 			moveY -= delta;
 			this.box.y += delta;
 
-			if (this.velocity.y > 0) {
-				for (let entity of this.game.entities) {
-					if (!entity.props.platform) continue;
-					if (this.box.bottomIntersects(entity.box)) {
-						this.box.y = entity.box.y - this.box.height;
-						this.velocity.y = 0;
-						this.jumpThrusting = false;
-						this.onGround = true;
-						moveY = 0;
-						break;
-					}
+			for (let entity of this.game.entities) {
+				let props = entity.props;
+				if (!props.platform && !props.wall) continue;
+
+				if (this.velocity.y > 0 && this.box.bottomIntersects(entity.box)) {
+					this.box.y = entity.box.y - this.box.height;
+					this.velocity.y = 0;
+					this.jumpThrusting = false;
+					this.onGround = true;
+					moveY = 0;
+					break;
+				} else if (this.velocity.y <= 0 && this.box.intersects(entity.box) && props.wall) {
+					this.box.y = entity.box.y + entity.box.height;
+					this.velocity.y = 0;
+					moveY = 0;
+					break;
 				}
 			}
 		}
@@ -102,21 +130,31 @@ export default class Player {
 			this.jumpThrusting = true;
 			this.jumpThrustTimer = 0;
 		}
+
+		this.wobbleVelocity.x += (initialVX - this.velocity.x);
+		this.wobbleVelocity.y += (initialVY - this.velocity.y);
 	}
 
 	draw(ctx: CanvasRenderingContext2D) {
-		ctx.strokeStyle = "black";
-		ctx.lineWidth = 0.1;
 		let box = this.box;
-		let shift = -this.velocity.x * 0.03;
-		let stretch = this.velocity.y * 0.02;
-		if (stretch > 0.9) stretch = 0.9;
+		let shift = -this.velocity.x * 0.03 + this.wobble.x;
+		let stretch = this.velocity.y * 0.01 - this.wobble.y;
+		let scaleY = Math.exp(stretch);
+		let scaleX = 1 / scaleY;
+
+		let w = box.width * scaleX;
+		let h = box.height * scaleY;
+		let x = box.x - (w - box.width) / 2;
+		let y = box.y - (h - box.height);
+
+		ctx.lineWidth = 0.1;
+		ctx.strokeStyle = "black";
 		ctx.fillStyle = this.color;
 		ctx.beginPath();
-		ctx.moveTo(box.x, box.y + box.height);
-		ctx.lineTo(box.x + box.width, box.y + box.height);
-		ctx.lineTo(box.x + box.width + shift, box.y - stretch);
-		ctx.lineTo(box.x + shift, box.y - stretch);
+		ctx.moveTo(x + shift, y);
+		ctx.lineTo(x + shift + w, y);
+		ctx.lineTo(x + w, y + h);
+		ctx.lineTo(x, y + h);
 		ctx.closePath();
 		ctx.fill();
 		ctx.stroke();
