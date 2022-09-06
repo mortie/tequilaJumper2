@@ -3,6 +3,7 @@ import {
 	GameController,
 	gamepadControllers,
 } from './gamecontrollers';
+import * as worldgens from './worldgens';
 
 import Game from './Game';
 import Canvas from './Canvas';
@@ -129,7 +130,7 @@ export default class Lobby {
 		}
 
 		if (startGame) {
-			this.game = new Game();
+			this.game = new Game(new worldgens.StupidWorldGen());
 			for (let player of this.joinedPlayers) {
 				this.game.addPlayer(player.controller, player.color);
 			}
