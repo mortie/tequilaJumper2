@@ -34,8 +34,6 @@ export default class Player {
 		let dragForce = this.onGround ? 4 : 3;
 		let moveForce = this.onGround ? 120 : 90;
 
-		let reading = this.controller.read();
-		this.velocity.x += reading.valueX * moveForce * dt;
 		this.velocity.y += 50 * dt;
 		if (this.velocity.y > -0.1) {
 			this.velocity.y += (this.velocity.y + 0.1) * dt;
@@ -44,9 +42,11 @@ export default class Player {
 		let initialVX = this.velocity.x;
 		let initialVY = this.velocity.y;
 
+		let reading = this.controller.read();
+		this.velocity.x += reading.valueX * moveForce * dt;
+
 		this.velocity.x -= this.velocity.x * dragForce * dt;
 
-		//v -= (k * (x - x_0) + cv) * dt
 		this.wobbleVelocity.x -= (80 * this.wobble.x + 1.6 * this.wobbleVelocity.x) * 5 * dt;
 		this.wobbleVelocity.y -= (80 * this.wobble.y + 1.6 * this.wobbleVelocity.y) * 5 * dt;
 		this.wobble.x += this.wobbleVelocity.x * dt;
